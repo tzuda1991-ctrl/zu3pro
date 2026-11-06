@@ -55,7 +55,10 @@ fun WalletScreen(onBack: () -> Unit) {
                 val d = app.repo.db.load()["dep"]?.values
                     ?.mapNotNull { runCatching { Deposit.from(it) }.getOrNull() }
                     ?.filter { it.userId == me.id } ?: emptyList()
-                withContext(Dispatchers.Main) { cfg = c; deps = d }
+                withContext(Dispatchers.Main) {
+                    cfg = c
+                    deps = d
+                }
             }
             delay(4000)
         }
@@ -72,8 +75,8 @@ fun WalletScreen(onBack: () -> Unit) {
         }
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GoldButton("DEPOSIT", onClick = { tab = 0 }, enabled = true)
-            GhostButton("WITHDRAW") { tab = 1 }
+            Box(Modifier.weight(1f)) { GoldButton("DEPOSIT", onClick = { tab = 0 }, enabled = true) }
+            Box(Modifier.weight(1f)) { GhostButton("WITHDRAW") { tab = 1 } }
         }
         Spacer(Modifier.height(12.dp))
 
@@ -86,18 +89,29 @@ fun WalletScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Field(utr, "UTR / Ref No", { utr = it })
                 Spacer(Modifier.height(8.dp))
-                GhostButton(if (proof == null) "Screenshot chuno" else "Screenshot ✓") { picker.launch("image/*") }
+                GhostButton(if (proof == null) "Screenshot chuno" else "Screenshot ✓") {
+                    picker.launch("image/*")
+                }
                 Spacer(Modifier.height(8.dp))
                 GoldButton("REQUEST", amt.isNotBlank()) {
                     val a = (amt.toLongOrNull() ?: 0) * 100
-                    if (a < cfg.minDeposit) { msg = "Min ${money(cfg.minDeposit)}" ; return@GoldButton }
+                    if (a < cfg.minDeposit) {
+                        msg = "Min ${money(cfg.minDeposit)}"
+                        return@GoldButton
+                    }
                     scope.launch {
                         val r = withContext(Dispatchers.IO) { app.repo.requestDeposit(me, a, utr, proof) }
-                        msg = if (r.isSuccess) "Request bhej di, admin approval ka wait karo" else r.exceptionOrNull()?.message ?: "fail"
-                        amt = ""; utr = ""; proof = null
+                        msg = if (r.isSuccess) "Request bhej di, admin approval ka wait karo"
+                        else r.exceptionOrNull()?.message ?: "fail"
+                        amt = ""
+                        utr = ""
+                        proof = null
                     }
                 }
-                if (msg.isNotEmpty()) { Spacer(Modifier.height(6.dp)); Text(msg, fontSize = 11.sp, color = Gold) }
+                if (msg.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(msg, fontSize = 11.sp, color = Gold)
+                }
             }
         } else {
             PanelCard {
@@ -107,15 +121,22 @@ fun WalletScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 GoldButton("WITHDRAW", amt.isNotBlank() && upi.isNotBlank()) {
                     val a = (amt.toLongOrNull() ?: 0) * 100
-                    if (a < cfg.minWithdraw) { msg = "Min ${money(cfg.minWithdraw)}"; return@GoldButton }
+                    if (a < cfg.minWithdraw) {
+                        msg = "Min ${money(cfg.minWithdraw)}"
+                        return@GoldButton
+                    }
                     scope.launch {
                         val r = withContext(Dispatchers.IO) { app.repo.requestWithdraw(me, a, upi) }
-                        msg = if (r.isSuccess) "Withdraw request bhej di" else r.exceptionOrNull()?.message ?: "fail"
+                        msg = if (r.isSuccess) "Withdraw request bhej di"
+                        else r.exceptionOrNull()?.message ?: "fail"
                         app.repo.refreshUser(me.id)?.let { app.me = it }
                         amt = ""
                     }
                 }
-                if (msg.isNotEmpty()) { Spacer(Modifier.height(6.dp)); Text(msg, fontSize = 11.sp, color = Gold) }
+                if (msg.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(msg, fontSize = 11.sp, color = Gold)
+                }
             }
         }
 
@@ -124,8 +145,12 @@ fun WalletScreen(onBack: () -> Unit) {
         LazyColumn(Modifier.weight(1f)) {
             items(deps) { d ->
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 5.dp)
-                        .clip(RoundedCornerShape(10.dp)).background(Panel).padding(10.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Panel)
+                        .padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
