@@ -25,13 +25,44 @@ object TgApi {
         }.getOrNull()
     }
 
-    fun sendMessage(token: String, chatId: String, text: String): JsonObject? {
+    fun sendMessage(
+        token: String,
+        chatId: String,
+        text: String,
+        markup: JsonObject? = null
+    ): JsonObject? {
         val payload = buildJsonObject {
             put("chat_id", chatId)
-            put("text", text)
+            put("text", text.take(4000))
             put("disable_web_page_preview", true)
+            if (markup != null) put("reply_markup", markup)
         }
         return post("sendMessage", token, payload.toString().toRequestBody(JSON_MT))
+    }
+
+    fun editMessage(
+        token: String,
+        chatId: String,
+        messageId: Long,
+        text: String,
+        markup: JsonObject? = null
+    ): JsonObject? {
+        val payload = buildJsonObject {
+            put("chat_id", chatId)
+            put("message_id", messageId)
+            put("text", text.take(4000))
+            put("disable_web_page_preview", true)
+            if (markup != null) put("reply_markup", markup)
+        }
+        return post("editMessageText", token, payload.toString().toRequestBody(JSON_MT))
+    }
+
+    fun answerCallback(token: String, id: String, text: String = "") {
+        val payload = buildJsonObject {
+            put("callback_query_id", id)
+            if (text.isNotBlank()) put("text", text)
+        }
+        post("answerCallbackQuery", token, payload.toString().toRequestBody(JSON_MT))
     }
 
     fun sendPhoto(token: String, chatId: String, bytes: ByteArray, caption: String): String? {
@@ -47,8 +78,13 @@ object TgApi {
             ?.lastOrNull()?.jsonObject?.get("file_id")?.jsonPrimitive?.contentOrNull
     }
 
-    fun getUpdates(token: String, offset: Long, limit: Int = 100): JsonObject? {
-        val url = BASE + token + "/getUpdates?offset=$offset&limit=$limit&timeout=0&allowed_updates=%5B%22message%22%5D"
+    fun getUpdates(
+        token: String,
+        offset: Long,
+        limit: Int = 100,
+        allowed: String = "%5B%22message%22%5D"
+    ): JsonObject? {
+        val url = BASE + token + "/getUpdates?offset=$offset&limit=$limit&timeout=0&allowed_updates=" + allowed
         val req = Request.Builder().url(url).get().build()
         return runCatching {
             http.newCall(req).execute().use { r ->
