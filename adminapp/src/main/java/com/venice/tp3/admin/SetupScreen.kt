@@ -16,57 +16,79 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SetupScreen(onDone: () -> Unit) {
+fun SetupScreen(onSaved: () -> Unit) {
     val app = AdminApp.app()
-    val p = app.prefs
-    val c0 = p.config
-    var adminTok by remember { mutableStateOf(c0.adminToken) }
-    var publicTok by remember { mutableStateOf(c0.publicToken) }
-    var chat by remember { mutableStateOf(c0.chatId) }
+    val cfg = app.prefs.config
+
+    var adminToken by remember { mutableStateOf(cfg.adminToken) }
+    var publicToken by remember { mutableStateOf(cfg.publicToken) }
+    var chatId by remember { mutableStateOf(cfg.chatId) }
+    var dbUrl by remember { mutableStateOf(cfg.dbUrl) }
     var pass by remember { mutableStateOf("") }
-    var log by remember { mutableStateOf("") }
+    var msg by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp)
+        Modifier.fillMaxSize().padding(20.dp).verticalScroll(rememberScrollState())
     ) {
-        Text("ADMIN SETUP", color = Gold, fontWeight = FontWeight.Black, fontSize = 24.sp)
-        Text("Teeno field bharo, Ping se test karo, phir Save.", fontSize = 11.sp, color = Color(0xFF9AA89F))
-        Spacer(Modifier.height(16.dp))
-        Field(adminTok, "Admin Bot Token", { adminTok = it })
+        Text("ADMIN SETUP", color = Gold, fontWeight = FontWeight.Black, fontSize = 22.sp)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "DB URL zaroori hai. Firebase Realtime DB banao, rules public karo, URL paste karo.",
+            fontSize = 11.sp, color = Color(0xFF9AA89F)
+        )
+        Spacer(Modifier.height(12.dp))
+
+        Field(dbUrl, "DB URL (https://xxx.firebaseio.com)", { dbUrl = it.trim() })
         Spacer(Modifier.height(8.dp))
-        Field(publicTok, "Public Bot Token", { publicTok = it })
+        Field(adminToken, "Admin Bot Token", { adminToken = it.trim() })
         Spacer(Modifier.height(8.dp))
-        Field(chat, "Group Chat ID (-100...)", { chat = it })
+        Field(publicToken, "Public Bot Token (optional)", { publicToken = it.trim() })
+        Spacer(Modifier.height(8.dp))
+        Field(chatId, "Group Chat ID (-100xxxxxxxxxx)", { chatId = it.trim() })
         Spacer(Modifier.height(8.dp))
         Field(pass, "Admin Password", { pass = it })
+
+        if (msg.isNotEmpty()) {
+            Spacer(Modifier.height(10.dp))
+            Text(msg, fontSize = 11.sp, color = Gold)
+        }
+
         Spacer(Modifier.height(14.dp))
         GhostButton("PING TEST") {
+            busy = true
             scope.launch {
-                p.config = BotConfig(adminTok, publicTok, chat)
-                val a = withContext(Dispatchers.IO) { app.repo.pingAdmin() }
-                val b = withContext(Dispatchers.IO) { app.repo.pingPublic() }
-                log = "admin: $a\npublic: $b"
+                msg = withContext(Dispatchers.IO) {
+                    "DB: ${Rtdb.ping(dbUrl)} | BOT: ${TgApi.ping(adminToken)}"
+                }
+                busy = false
             }
         }
+
         Spacer(Modifier.height(8.dp))
-        GoldButton("SAVE", adminTok.isNotBlank() && publicTok.isNotBlank() && chat.isNotBlank() && pass.isNotBlank()) {
-            p.config = BotConfig(adminTok, publicTok, chat)
-            p.adminOk = false
-            p.meId = app.repo.sha(pass)
-            onDone()
-        }
-        if (log.isNotEmpty()) {
-            Spacer(Modifier.height(10.dp))
-            Text(log, fontSize = 10.sp, color = Gold)
-        }
-        Spacer(Modifier.height(20.dp))
-        PanelCard {
-            Text("Zaroori steps", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Gold)
-            Text(
-                "1. BotFather me dono bot banao\n2. Dono bot ka privacy mode OFF karo (/setprivacy)\n3. Dono bot ko group me add karo\n4. Bot ko admin banao\n5. Group link se -100... id nikaalo\n6. Ping karke OK dekho",
-                fontSize = 11.sp
+        GoldButton("SAVE + LOGIN", !busy && pass.isNotBlank() && dbUrl.isNotBlank()) {
+            if (adminToken.isBlank()) { msg = "Admin bot token daalo"; return@GoldButton }
+            if (chatId.isBlank()) { msg = "Group chat id daalo"; return@GoldButton }
+            if (dbUrl.isBlank()) { msg = "DB URL daalo"; return@GoldButton }
+            app.prefs.config = BotConfig(
+                adminToken = adminToken.trim(),
+                publicToken = publicToken.trim(),
+                chatId = chatId.trim(),
+                dbUrl = dbUrl.trim()
             )
+            app.prefs.meId = app.repo.sha(pass)
+            app.prefs.adminOk = true
+            app.syncBot()
+            onSaved()
         }
+
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Firebase → Realtime Database → Rules:\n{ \"rules\": { \".read\": true, \".write\": true } }",
+            fontSize = 10.sp, color = Color(0xFF6F8579)
+        )
+        Spacer(Modifier.height(10.dp))
+        Text("Save ke baad apne admin bot ko Telegram me /start bhejo.", fontSize = 10.sp, color = Gold)
     }
 }
