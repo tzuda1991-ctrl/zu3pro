@@ -16,13 +16,13 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.09.03"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    api(platform("androidx.compose:compose-bom:2024.09.03"))
+    api("androidx.compose.ui:ui")
+    api("androidx.compose.foundation:foundation")
+    api("androidx.compose.material3:material3")
+    api("androidx.compose.material:material-icons-extended")
+    api("androidx.core:core-ktx:1.13.1")
+    api("com.squareup.okhttp3:okhttp:4.12.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    api("io.coil-kt:coil-compose:2.7.0")
 }
