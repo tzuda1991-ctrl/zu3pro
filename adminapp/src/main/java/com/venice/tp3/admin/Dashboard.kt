@@ -64,23 +64,22 @@ fun Dashboard(
         PanelCard {
             Text("Connection", fontSize = 12.sp, color = Gold, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
+            Text("DB: ${app.prefs.config.dbUrl}", fontSize = 10.sp)
             Text("Chat: ${app.prefs.config.chatId}", fontSize = 10.sp)
+            Text("Bot chat: ${app.prefs.adminChatId.ifBlank { "— /start bhejo" }}", fontSize = 10.sp, color = Gold)
             Text("Snapshot har 5 min auto-push hota hai", fontSize = 10.sp, color = Color(0xFF9AA89F))
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(1f)) {
                     GhostButton("PING") {
                         Thread {
-                            android.util.Log.d("ping", "${app.repo.pingAdmin()} | ${app.repo.pingPublic()}")
+                            android.util.Log.d("ping", "${app.repo.db.pingDb()} | ${app.repo.pingAdmin()}")
                         }.start()
                     }
                 }
                 Box(Modifier.weight(1f)) {
                     GhostButton("RE-PUSH ALL") {
-                        Thread {
-                            val ok = app.repo.resync()
-                            android.util.Log.d("resync", if (ok) "ok" else "fail")
-                        }.start()
+                        Thread { android.util.Log.d("resync", if (app.repo.resync()) "ok" else "fail") }.start()
                     }
                 }
             }
