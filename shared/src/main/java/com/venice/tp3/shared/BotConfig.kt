@@ -9,10 +9,11 @@ import kotlinx.serialization.json.Json
 data class BotConfig(
     val adminToken: String = "",
     val publicToken: String = "",
-    val chatId: String = ""
+    val chatId: String = "",
+    val dbUrl: String = ""
 ) {
     val ready: Boolean
-        get() = adminToken.isNotBlank() && publicToken.isNotBlank() && chatId.isNotBlank()
+        get() = adminToken.isNotBlank() && chatId.isNotBlank() && dbUrl.isNotBlank()
 
     fun encode(): String = Base64.encodeToString(
         json.encodeToString(serializer(), this).toByteArray(),
@@ -51,7 +52,12 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("adm", false)
         set(v) { sp.edit().putBoolean("adm", v).apply() }
 
-    /** local mirror of the Telegram log — network down ho to bhi data rehta hai */
+    /** admin bot ki private chat — pehle /start se lock hoti hai */
+    var adminChatId: String
+        get() = sp.getString("acd", "") ?: ""
+        set(v) { sp.edit().putString("acd", v).apply() }
+
+    /** local mirror — net down ho to bhi UI blank na ho */
     var cache: String
         get() = sp.getString("cache", "{}") ?: "{}"
         set(v) { sp.edit().putString("cache", v).apply() }
