@@ -50,4 +50,13 @@ class Prefs(ctx: Context) {
     var adminOk: Boolean
         get() = sp.getBoolean("adm", false)
         set(v) { sp.edit().putBoolean("adm", v).apply() }
+
+    /** local mirror of the Telegram log — network down ho to bhi data rehta hai */
+    var cache: String
+        get() = sp.getString("cache", "{}") ?: "{}"
+        set(v) { sp.edit().putString("cache", v).apply() }
+
+    fun clearCache() {
+        sp.edit().putString("cache", "{}").apply()
+    }
 }
