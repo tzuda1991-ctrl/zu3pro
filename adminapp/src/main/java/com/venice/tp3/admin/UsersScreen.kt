@@ -47,9 +47,13 @@ fun UsersScreen(onBack: () -> Unit) {
         LazyColumn(Modifier.weight(1f)) {
             items(users) { u ->
                 Row(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                        .clip(RoundedCornerShape(10.dp)).background(Panel)
-                        .clickable { edit = u }.padding(10.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Panel)
+                        .clickable { edit = u }
+                        .padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Avatar(u.name, u.color, 36)
@@ -82,13 +86,10 @@ fun UsersScreen(onBack: () -> Unit) {
                 TextButton({
                     val d = (delta.toLongOrNull() ?: 0) * 100
                     scope.launch {
-                        withContext(Dispatchers.IO) {
-                            app.repo.adjust(u, d)
-                            val fresh = app.repo.refreshUser(u.id)
-                            if (fresh != null) app.repo.saveUser(fresh)
-                        }
-                        edit = null; delta = ""
-                        users = app.repo.allUsers()
+                        withContext(Dispatchers.IO) { app.repo.adjust(u, d) }
+                        edit = null
+                        delta = ""
+                        users = withContext(Dispatchers.IO) { app.repo.allUsers() }
                     }
                 }) { Text("Balance badlo") }
             },
@@ -96,11 +97,13 @@ fun UsersScreen(onBack: () -> Unit) {
                 Row {
                     TextButton({
                         scope.launch {
-                            val fresh = app.repo.refreshUser(u.id) ?: return@launch
-                            fresh.status = if (fresh.active) "BANNED" else "ACTIVE"
-                            withContext(Dispatchers.IO) { app.repo.saveUser(fresh) }
+                            withContext(Dispatchers.IO) {
+                                val fresh = app.repo.refreshUser(u.id) ?: return@withContext
+                                fresh.status = if (fresh.active) "BANNED" else "ACTIVE"
+                                app.repo.saveUser(fresh)
+                            }
                             edit = null
-                            users = app.repo.allUsers()
+                            users = withContext(Dispatchers.IO) { app.repo.allUsers() }
                         }
                     }) { Text(if (u.active) "Ban" else "Unban") }
                     TextButton({ edit = null }) { Text("Band") }
