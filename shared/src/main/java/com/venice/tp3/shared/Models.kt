@@ -15,6 +15,7 @@ data class User(
     var refCode: String = "",
     var referredBy: String = "",
     var color: Int = 0,
+    var demoGiven: Boolean = false,
     var del: Boolean = false
 ) {
     val active get() = status == "ACTIVE"
@@ -88,6 +89,8 @@ data class TableCfg(
     var payeeName: String = "Teen Patti 3",
     var minDeposit: Long = 10000L,
     var minWithdraw: Long = 50000L,
+    var demoOn: Boolean = true,
+    var demoTopUp: Long = 50000L,
     var del: Boolean = false
 ) {
     fun toObj(): JsonObject = J.encodeToJsonElement(serializer(), this).jsonObject
