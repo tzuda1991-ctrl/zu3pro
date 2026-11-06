@@ -18,7 +18,10 @@ class UserApp : Application() {
     }
 
     companion object {
-        lateinit var instance: UserApp
-        fun app() = instance
+        @Volatile
+        private var instance: UserApp? = null
+
+        fun app(): UserApp = instance
+            ?: throw IllegalStateException("UserApp not initialized - manifest me android:name=\".UserApp\" check karo")
     }
 }
