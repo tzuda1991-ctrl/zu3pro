@@ -1,7 +1,7 @@
 package com.venice.tp3.shared
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.*
 
 @Serializable
 data class User(
@@ -79,7 +79,7 @@ data class History(
 @Serializable
 data class TableCfg(
     val id: String = "cfg",
-    var boot: Long = 1000L,          // paise
+    var boot: Long = 1000L,
     var minBuyIn: Long = 10000L,
     var maxBuyIn: Long = 500000L,
     var players: Int = 5,
