@@ -14,16 +14,16 @@ data class BotConfig(
     val ready: Boolean
         get() = adminToken.isNotBlank() && publicToken.isNotBlank() && chatId.isNotBlank()
 
-    fun encode(): String =
-        Base64.encodeToString(
-            Json.encodeToString(BotConfig.serializer(), this).toByteArray(),
-            Base64.NO_WRAP
-        )
+    fun encode(): String = Base64.encodeToString(
+        json.encodeToString(serializer(), this).toByteArray(),
+        Base64.NO_WRAP
+    )
 
     companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+
         fun decode(s: String): BotConfig? = runCatching {
-            Json { ignoreUnknownKeys = true }
-                .decodeFromString(BotConfig.serializer(), String(Base64.decode(s.trim(), Base64.DEFAULT)))
+            json.decodeFromString(serializer(), String(Base64.decode(s.trim(), Base64.DEFAULT)))
         }.getOrNull()
     }
 }
