@@ -21,11 +21,17 @@ fun LoginScreen(onIn: () -> Unit, onSetup: () -> Unit) {
         Text("ADMIN LOGIN", color = Gold, fontWeight = FontWeight.Black, fontSize = 24.sp)
         Spacer(Modifier.height(16.dp))
         Field(pass, "Password", { pass = it })
-        if (err.isNotEmpty()) { Spacer(Modifier.height(6.dp)); Text(err, color = Color.Red, fontSize = 11.sp) }
+        if (err.isNotEmpty()) {
+            Spacer(Modifier.height(6.dp))
+            Text(err, color = Color.Red, fontSize = 11.sp)
+        }
         Spacer(Modifier.height(14.dp))
         GoldButton("UNLOCK", pass.isNotBlank()) {
-            if (app.repo.sha(pass) == app.prefs.meId) { app.prefs.adminOk = true; onIn() }
-            else err = "Galat password"
+            if (app.repo.sha(pass) == app.prefs.meId) {
+                app.prefs.adminOk = true
+                app.syncBot()
+                onIn()
+            } else err = "Galat password"
         }
         TextButton({ onSetup() }, Modifier.align(Alignment.CenterHorizontally)) { Text("Setup badlo") }
     }
