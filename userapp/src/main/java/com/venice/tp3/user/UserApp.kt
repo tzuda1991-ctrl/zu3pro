@@ -13,7 +13,7 @@ class UserApp : Application() {
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs(this)
-        repo = Repo(prefs, admin = false)  // user app sirf public bot poll karta hai
+        repo = Repo(prefs, admin = false)
         instance = this
     }
 
