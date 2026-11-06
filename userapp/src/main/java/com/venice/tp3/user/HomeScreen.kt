@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.venice.tp3.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -25,6 +28,9 @@ fun HomeScreen(onPlay: (Long, Int) -> Unit, onWallet: () -> Unit, onProfile: () 
     var me by remember { mutableStateOf(app.me) }
     var cfg by remember { mutableStateOf(TableCfg()) }
     var bump by remember { mutableIntStateOf(0) }
+    var pending by remember { mutableStateOf<Pair<Long, Int>?>(null) }
+    var msg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(bump) {
         while (true) {
@@ -33,12 +39,20 @@ fun HomeScreen(onPlay: (Long, Int) -> Unit, onWallet: () -> Unit, onProfile: () 
                 val fresh = app.repo.refreshUser(id)
                 val c = app.repo.tableCfg()
                 withContext(Dispatchers.Main) {
-                    if (fresh != null) { app.me = fresh; me = fresh }
+                    if (fresh != null) {
+                        app.me = fresh
+                        me = fresh
+                    }
                     cfg = c
                 }
             }
             delay(4000)
         }
+    }
+
+    fun start(boot: Long, seats: Int) {
+        if ((me?.balance ?: 0L) >= boot * 10) onPlay(boot, seats)
+        else pending = boot to seats
     }
 
     Column(Modifier.fillMaxSize().background(Bg)) {
@@ -85,11 +99,7 @@ fun HomeScreen(onPlay: (Long, Int) -> Unit, onWallet: () -> Unit, onProfile: () 
                         Modifier.fillMaxWidth(0.78f).padding(vertical = 6.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(Color(0xFF0B2417))
-                            .clickable {
-                                if ((me?.balance ?: 0) < boot * 10)
-                                    onWallet()
-                                else onPlay(boot, seats)
-                            }
+                            .clickable { start(boot, seats) }
                             .padding(14.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -103,6 +113,10 @@ fun HomeScreen(onPlay: (Long, Int) -> Unit, onWallet: () -> Unit, onProfile: () 
                 }
                 Spacer(Modifier.height(16.dp))
                 Text("Min balance ${money(cfg.boot * 10)} chahiye", fontSize = 10.sp, color = Color(0xFF6F8579))
+                if (msg.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(msg, fontSize = 11.sp, color = Gold)
+                }
             }
         }
 
@@ -121,5 +135,45 @@ fun HomeScreen(onPlay: (Long, Int) -> Unit, onWallet: () -> Unit, onProfile: () 
                 contentAlignment = Alignment.Center
             ) { Text("👤  Profile", fontSize = 13.sp) }
         }
+    }
+
+    pending?.let { (boot, seats) ->
+        AlertDialog(
+            onDismissRequest = { pending = null },
+            title = { Text("Balance kam hai") },
+            text = {
+                Column {
+                    Text("Is table ke liye ${money(boot * 10)} chahiye.", fontSize = 12.sp)
+                    Text("Aapka balance: ${money(me?.balance ?: 0)}", fontSize = 12.sp, color = Gold)
+                    if (cfg.demoOn && me?.demoGiven != true) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Ek baar free demo stack ${money(cfg.demoTopUp)} mil sakta hai.", fontSize = 11.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton({
+                    val id = app.prefs.meId
+                    scope.launch {
+                        val fresh = withContext(Dispatchers.IO) { app.repo.ensurePlayable(id, boot) }
+                        pending = null
+                        if (fresh != null) {
+                            app.me = fresh
+                            me = fresh
+                            onPlay(boot, seats)
+                        } else {
+                            msg = "Pehle paise add karo"
+                            onWallet()
+                        }
+                    }
+                }) { Text("DEMO KHELO") }
+            },
+            dismissButton = {
+                Row {
+                    TextButton({ pending = null; onWallet() }) { Text("ADD MONEY") }
+                    TextButton({ pending = null }) { Text("Band") }
+                }
+            }
+        )
     }
 }
