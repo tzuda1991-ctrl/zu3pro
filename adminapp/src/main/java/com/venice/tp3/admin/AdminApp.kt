@@ -11,7 +11,7 @@ class AdminApp : Application() {
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs(this)
-        repo = Repo(prefs)
+        repo = Repo(prefs, admin = true)   // admin app sirf admin bot poll karta hai
         instance = this
     }
 
