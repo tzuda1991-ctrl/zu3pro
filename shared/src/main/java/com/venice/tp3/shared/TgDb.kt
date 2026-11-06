@@ -50,17 +50,18 @@ class TgDb(private val prefs: Prefs) {
                 val nl = text.indexOf('\n')
                 if (nl < 0) continue
                 val tag = text.substring(4, nl).trim()
-                val parsed = runCatching { Json.parseToJsonElement(text.substring(nl + 1)).jsonObject }.getOrNull()
-                    ?: continue
+                val parsed = runCatching {
+                    Json.parseToJsonElement(text.substring(nl + 1)).jsonObject
+                }.getOrNull() ?: continue
                 out.add(Record(tag, parsed))
             }
             if (admin) prefs.offAdmin = off else prefs.offPublic = off
-            if (arr.size() < 100) return out
+            if (arr.size < 100) return out
         }
         return out
     }
 
-    /** tag -> (id -> latest body). del=true hataya jaata hai. */
+    /** tag -> (id -> latest body). del=true wale hat jaate hain. */
     fun load(admin: Boolean = false): Map<String, Map<String, JsonObject>> {
         val map = LinkedHashMap<String, LinkedHashMap<String, JsonObject>>()
         for (r in poll(admin)) {
@@ -68,7 +69,9 @@ class TgDb(private val prefs: Prefs) {
             val bucket = map.getOrPut(r.tag) { LinkedHashMap() }
             bucket[id] = r.body
         }
-        for (b in map.values) b.entries.removeAll { it.value["del"]?.jsonPrimitive?.booleanOrNull == true }
+        for (b in map.values) {
+            b.entries.removeAll { it.value["del"]?.jsonPrimitive?.booleanOrNull == true }
+        }
         return map
     }
 
