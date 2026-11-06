@@ -36,7 +36,10 @@ fun DepositsScreen(onBack: () -> Unit) {
                 val u = l.mapNotNull { d ->
                     if (d.proofFileId.isNotBlank()) d.id to (app.repo.db.proofUrl(d.proofFileId) ?: "") else null
                 }.toMap()
-                withContext(Dispatchers.Main) { list = l; urls = u }
+                withContext(Dispatchers.Main) {
+                    list = l
+                    urls = u
+                }
             }
             delay(5000)
         }
@@ -50,8 +53,12 @@ fun DepositsScreen(onBack: () -> Unit) {
         LazyColumn(Modifier.weight(1f)) {
             items(list) { d ->
                 Column(
-                    Modifier.fillMaxWidth().padding(vertical = 5.dp)
-                        .clip(RoundedCornerShape(12.dp)).background(Panel).padding(10.dp)
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Panel)
+                        .padding(10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -66,7 +73,9 @@ fun DepositsScreen(onBack: () -> Unit) {
                             model = it,
                             contentDescription = null,
                             contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.fillMaxWidth().height(160.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
                                 .clip(RoundedCornerShape(8.dp))
                         )
                     }
@@ -77,7 +86,9 @@ fun DepositsScreen(onBack: () -> Unit) {
                                 GoldButton("APPROVE") {
                                     scope.launch {
                                         withContext(Dispatchers.IO) { app.repo.setDeposit(d, "APPROVED", "ok") }
-                                        list = app.repo.allDeposits().sortedByDescending { it.ts }
+                                        list = withContext(Dispatchers.IO) {
+                                            app.repo.allDeposits().sortedByDescending { it.ts }
+                                        }
                                     }
                                 }
                             }
@@ -85,7 +96,9 @@ fun DepositsScreen(onBack: () -> Unit) {
                                 GhostButton("REJECT") {
                                     scope.launch {
                                         withContext(Dispatchers.IO) { app.repo.setDeposit(d, "REJECTED", "rejected") }
-                                        list = app.repo.allDeposits().sortedByDescending { it.ts }
+                                        list = withContext(Dispatchers.IO) {
+                                            app.repo.allDeposits().sortedByDescending { it.ts }
+                                        }
                                     }
                                 }
                             }
