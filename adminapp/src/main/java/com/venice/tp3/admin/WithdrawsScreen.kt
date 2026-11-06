@@ -41,8 +41,7 @@ fun WithdrawsScreen(onBack: () -> Unit) {
     fun act(w: Withdraw, status: String, note: String) {
         scope.launch {
             val ok = withContext(Dispatchers.IO) { app.repo.setWithdraw(w, status, note) }
-            msg = if (ok) "${w.userName} · ${money(w.amount)} → $status"
-            else "Save fail — net check karo"
+            msg = if (ok) "${w.userName} · ${money(w.amount)} → $status" else "Save fail"
             reload()
         }
     }
@@ -76,12 +75,8 @@ fun WithdrawsScreen(onBack: () -> Unit) {
                     if (w.status == "PENDING") {
                         Spacer(Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) {
-                                GoldButton("PAID") { act(w, "APPROVED", "paid") }
-                            }
-                            Box(Modifier.weight(1f)) {
-                                GhostButton("REJECT + REFUND") { act(w, "REJECTED", "refund") }
-                            }
+                            Box(Modifier.weight(1f)) { GoldButton("PAID") { act(w, "APPROVED", "paid") } }
+                            Box(Modifier.weight(1f)) { GhostButton("REJECT + REFUND") { act(w, "REJECTED", "refund") } }
                         }
                     }
                     if (w.note.isNotBlank()) Text(w.note, fontSize = 9.sp)
