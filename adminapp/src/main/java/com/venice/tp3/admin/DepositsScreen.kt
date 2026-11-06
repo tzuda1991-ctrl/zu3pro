@@ -51,8 +51,7 @@ fun DepositsScreen(onBack: () -> Unit) {
     fun act(d: Deposit, status: String, note: String) {
         scope.launch {
             val ok = withContext(Dispatchers.IO) { app.repo.setDeposit(d, status, note) }
-            msg = if (ok) "${d.userName} · ${money(d.amount)} → $status"
-            else "Save fail — net check karo"
+            msg = if (ok) "${d.userName} · ${money(d.amount)} → $status" else "Save fail"
             reload()
         }
     }
@@ -89,21 +88,14 @@ fun DepositsScreen(onBack: () -> Unit) {
                             model = it,
                             contentDescription = null,
                             contentScale = ContentScale.FillWidth,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                            modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(8.dp))
                         )
                     }
                     if (d.status == "PENDING") {
                         Spacer(Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(Modifier.weight(1f)) {
-                                GoldButton("APPROVE + CREDIT") { act(d, "APPROVED", "ok") }
-                            }
-                            Box(Modifier.weight(1f)) {
-                                GhostButton("REJECT") { act(d, "REJECTED", "rejected") }
-                            }
+                            Box(Modifier.weight(1f)) { GoldButton("APPROVE + CREDIT") { act(d, "APPROVED", "ok") } }
+                            Box(Modifier.weight(1f)) { GhostButton("REJECT") { act(d, "REJECTED", "rejected") } }
                         }
                     }
                     if (d.note.isNotBlank()) Text(d.note, fontSize = 9.sp, color = Color(0xFF9AA89F))
