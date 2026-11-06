@@ -1,8 +1,6 @@
 package com.venice.tp3.shared
 
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 import java.security.MessageDigest
 import java.util.UUID
 
@@ -10,7 +8,9 @@ class Repo(val prefs: Prefs) {
     val db = TgDb(prefs)
 
     fun sha(s: String): String =
-        MessageDigest.getInstance("SHA-256").digest(("tp3$s").toByteArray()).joinToString("") { "%02x".format(it) }
+        MessageDigest.getInstance("SHA-256")
+            .digest(("tp3$s").toByteArray())
+            .joinToString("") { "%02x".format(it) }
 
     fun allUsers(): List<User> =
         db.load()["user"]?.values?.mapNotNull { runCatching { User.from(it) }.getOrNull() } ?: emptyList()
@@ -52,7 +52,7 @@ class Repo(val prefs: Prefs) {
         return Result.success(u)
     }
 
-    fun saveUser(u: User) = db.save("user", u.toObj())
+    fun saveUser(u: User): Boolean = db.save("user", u.toObj())
 
     fun adjust(u: User, delta: Long) {
         val fresh = refreshUser(u.id) ?: return
@@ -86,7 +86,10 @@ class Repo(val prefs: Prefs) {
         if (u.balance < amount) return Result.failure(Exception("Balance kam hai"))
         val w = Withdraw(
             id = UUID.randomUUID().toString().take(12),
-            userId = u.id, userName = u.name, amount = amount, upi = upi
+            userId = u.id,
+            userName = u.name,
+            amount = amount,
+            upi = upi
         )
         adjust(u, -amount)
         return if (db.save("wdr", w.toObj())) Result.success(Unit)
@@ -107,7 +110,7 @@ class Repo(val prefs: Prefs) {
         db.save("hist", History(UUID.randomUUID().toString().take(10), userId, tableId, delta).toObj())
     }
 
-    fun saveCfg(c: TableCfg) = db.save("cfg", c.toObj(), true)
+    fun saveCfg(c: TableCfg): Boolean = db.save("cfg", c.toObj(), true)
 
     fun snapshotAll() {
         val cfg = tableCfg()
@@ -118,6 +121,13 @@ class Repo(val prefs: Prefs) {
     fun pingPublic(): String = TgApi.ping(prefs.config.publicToken)
 
     fun sendTest() {
-        db.save("ping", buildJsonObject { put("id", UUID.randomUUID().toString()); put("ts", now()) }, true)
+        db.save(
+            "ping",
+            buildJsonObject {
+                put("id", UUID.randomUUID().toString())
+                put("ts", now())
+            },
+            true
+        )
     }
 }
