@@ -43,8 +43,12 @@ fun WithdrawsScreen(onBack: () -> Unit) {
         LazyColumn(Modifier.weight(1f)) {
             items(list) { w ->
                 Column(
-                    Modifier.fillMaxWidth().padding(vertical = 5.dp)
-                        .clip(RoundedCornerShape(12.dp)).background(Panel).padding(10.dp)
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Panel)
+                        .padding(10.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -60,7 +64,9 @@ fun WithdrawsScreen(onBack: () -> Unit) {
                                 GoldButton("PAID") {
                                     scope.launch {
                                         withContext(Dispatchers.IO) { app.repo.setWithdraw(w, "APPROVED", "paid") }
-                                        list = app.repo.allWithdraws().sortedByDescending { it.ts }
+                                        list = withContext(Dispatchers.IO) {
+                                            app.repo.allWithdraws().sortedByDescending { it.ts }
+                                        }
                                     }
                                 }
                             }
@@ -68,7 +74,9 @@ fun WithdrawsScreen(onBack: () -> Unit) {
                                 GhostButton("REJECT") {
                                     scope.launch {
                                         withContext(Dispatchers.IO) { app.repo.setWithdraw(w, "REJECTED", "refund") }
-                                        list = app.repo.allWithdraws().sortedByDescending { it.ts }
+                                        list = withContext(Dispatchers.IO) {
+                                            app.repo.allWithdraws().sortedByDescending { it.ts }
+                                        }
                                     }
                                 }
                             }
