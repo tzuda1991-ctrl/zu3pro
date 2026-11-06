@@ -23,15 +23,27 @@ import kotlinx.coroutines.withContext
 fun WithdrawsScreen(onBack: () -> Unit) {
     val app = AdminApp.app()
     var list by remember { mutableStateOf<List<Withdraw>>(emptyList()) }
+    var msg by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+
+    suspend fun reload() = withContext(Dispatchers.IO) {
+        val l = app.repo.allWithdraws().sortedByDescending { it.ts }
+        withContext(Dispatchers.Main) { list = l }
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
-            withContext(Dispatchers.IO) {
-                val l = app.repo.allWithdraws().sortedByDescending { it.ts }
-                withContext(Dispatchers.Main) { list = l }
-            }
+            reload()
             delay(5000)
+        }
+    }
+
+    fun act(w: Withdraw, status: String, note: String) {
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { app.repo.setWithdraw(w, status, note) }
+            msg = if (ok) "${w.userName} · ${money(w.amount)} → $status"
+            else "Save fail — net check karo"
+            reload()
         }
     }
 
@@ -40,8 +52,12 @@ fun WithdrawsScreen(onBack: () -> Unit) {
             TextButton(onBack) { Text("< Back") }
             Text("WITHDRAWS", color = Gold)
         }
+        if (msg.isNotEmpty()) {
+            Text(msg, fontSize = 11.sp, color = Gold)
+            Spacer(Modifier.height(4.dp))
+        }
         LazyColumn(Modifier.weight(1f)) {
-            items(list) { w ->
+            items(list, key = { it.id }) { w ->
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -61,27 +77,14 @@ fun WithdrawsScreen(onBack: () -> Unit) {
                         Spacer(Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f)) {
-                                GoldButton("PAID") {
-                                    scope.launch {
-                                        withContext(Dispatchers.IO) { app.repo.setWithdraw(w, "APPROVED", "paid") }
-                                        list = withContext(Dispatchers.IO) {
-                                            app.repo.allWithdraws().sortedByDescending { it.ts }
-                                        }
-                                    }
-                                }
+                                GoldButton("PAID") { act(w, "APPROVED", "paid") }
                             }
                             Box(Modifier.weight(1f)) {
-                                GhostButton("REJECT") {
-                                    scope.launch {
-                                        withContext(Dispatchers.IO) { app.repo.setWithdraw(w, "REJECTED", "refund") }
-                                        list = withContext(Dispatchers.IO) {
-                                            app.repo.allWithdraws().sortedByDescending { it.ts }
-                                        }
-                                    }
-                                }
+                                GhostButton("REJECT + REFUND") { act(w, "REJECTED", "refund") }
                             }
                         }
                     }
+                    if (w.note.isNotBlank()) Text(w.note, fontSize = 9.sp)
                 }
             }
         }
