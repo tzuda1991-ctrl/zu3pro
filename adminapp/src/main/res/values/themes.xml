@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TP3" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#08130D</item>
+        <item name="android:windowBackground">#08130D</item>
+    </style>
+</resources>
