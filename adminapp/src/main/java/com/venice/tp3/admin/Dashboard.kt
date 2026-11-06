@@ -1,11 +1,9 @@
 package com.venice.tp3.admin
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,8 +30,12 @@ fun Dashboard(
                 val u = app.repo.allUsers()
                 val d = app.repo.allDeposits()
                 val w = app.repo.allWithdraws()
-                if (tick % 15 == 0) app.repo.snapshotAll()
-                withContext(Dispatchers.Main) { users = u; deps = d; wdrs = w }
+                if (tick % 60 == 0) app.repo.snapshotAll()
+                withContext(Dispatchers.Main) {
+                    users = u
+                    deps = d
+                    wdrs = w
+                }
             }
             tick++
             delay(5000)
@@ -63,15 +65,24 @@ fun Dashboard(
             Text("Connection", fontSize = 12.sp, color = Gold, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text("Chat: ${app.prefs.config.chatId}", fontSize = 10.sp)
-            Text("Snapshot har 75s auto-push hota hai", fontSize = 10.sp, color = Color(0xFF9AA89F))
+            Text("Snapshot har 5 min auto-push hota hai", fontSize = 10.sp, color = Color(0xFF9AA89F))
             Spacer(Modifier.height(8.dp))
-            GhostButton("PING TEST") {
-                Thread {
-                    val a = app.repo.pingAdmin()
-                    val b = app.repo.pingPublic()
-                    app.repo.sendTest()
-                    android.util.Log.d("ping", "$a | $b")
-                }.start()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.weight(1f)) {
+                    GhostButton("PING") {
+                        Thread {
+                            android.util.Log.d("ping", "${app.repo.pingAdmin()} | ${app.repo.pingPublic()}")
+                        }.start()
+                    }
+                }
+                Box(Modifier.weight(1f)) {
+                    GhostButton("RE-PUSH ALL") {
+                        Thread {
+                            val ok = app.repo.resync()
+                            android.util.Log.d("resync", if (ok) "ok" else "fail")
+                        }.start()
+                    }
+                }
             }
         }
         Spacer(Modifier.height(14.dp))
