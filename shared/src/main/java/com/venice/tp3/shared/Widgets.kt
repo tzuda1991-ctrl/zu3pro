@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,9 +28,12 @@ private val palette = listOf(
 
 @Composable
 fun Avatar(name: String, color: Int, size: Int = 48) {
+    val base = palette[color % palette.size]
     Box(
-        Modifier.size(size.dp).clip(CircleShape)
-            .background(Brush.linearGradient(listOf(palette[color % palette.size], palette[color % palette.size].copy(0.5f)))),
+        Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(Brush.linearGradient(listOf(base, base.copy(alpha = 0.5f)))),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -47,7 +52,9 @@ fun GoldButton(text: String, enabled: Boolean = true, onClick: () -> Unit) {
         enabled = enabled,
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Color.Black),
-        modifier = Modifier.fillMaxWidth().height(52.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
     ) {
         Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
     }
@@ -58,21 +65,27 @@ fun GhostButton(text: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth().height(48.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
     ) { Text(text) }
 }
 
 @Composable
-fun Field(value: String, label: String, onChange: (String) -> Unit, numeric: Boolean = false) {
+fun Field(
+    value: String,
+    label: String,
+    onChange: (String) -> Unit,
+    numeric: Boolean = false
+) {
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
         label = { Text(label) },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
-        keyboardOptions = if (numeric)
-            androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
-        else androidx.compose.foundation.text.KeyboardOptions.Default,
+        keyboardOptions = if (numeric) KeyboardOptions(keyboardType = KeyboardType.Number)
+        else KeyboardOptions.Default,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -80,7 +93,8 @@ fun Field(value: String, label: String, onChange: (String) -> Unit, numeric: Boo
 @Composable
 fun PanelCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxWidth()
+        Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
             .background(Panel)
             .border(1.dp, Color(0xFF1E3A2B), RoundedCornerShape(18.dp))
@@ -92,9 +106,10 @@ fun PanelCard(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 fun StatBox(label: String, value: String, accent: Color = Gold, onClick: (() -> Unit)? = null) {
     Column(
-        Modifier.clip(RoundedCornerShape(14.dp))
+        Modifier
+            .clip(RoundedCornerShape(14.dp))
             .background(Color(0xFF14261C))
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -111,7 +126,11 @@ fun StatusChip(status: String) {
         else -> Color(0xFFF39C12)
     }
     Box(
-        Modifier.clip(RoundedCornerShape(20.dp)).background(c.copy(alpha = 0.18f))
+        Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(c.copy(alpha = 0.18f))
             .padding(horizontal = 10.dp, vertical = 3.dp)
-    ) { Text(status, color = c, fontSize = 10.sp, fontWeight = FontWeight.Bold) }
+    ) {
+        Text(status, color = c, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
 }
