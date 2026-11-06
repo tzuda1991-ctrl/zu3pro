@@ -62,11 +62,8 @@ fun UsersScreen(onBack: () -> Unit) {
         busy = true
         scope.launch {
             val delta = rupees * 100L * sign
-            val ok = withContext(Dispatchers.IO) {
-                app.repo.adjust(id, delta, note.ifBlank { "manual" })
-            }
-            msg = if (ok) "${if (sign > 0) "+" else "-"}${money(rupees * 100L)} ho gaya"
-            else "Save fail — net check karo"
+            val ok = withContext(Dispatchers.IO) { app.repo.adjust(id, delta, note.ifBlank { "manual" }) }
+            msg = if (ok) "${if (sign > 0) "+" else "-"}${money(rupees * 100L)} ho gaya" else "Save fail"
             edit = withContext(Dispatchers.IO) { app.repo.refreshUser(id) }
             amt = ""
             note = ""
@@ -77,14 +74,10 @@ fun UsersScreen(onBack: () -> Unit) {
 
     fun setExact(id: String) {
         val rupees = amt.toLongOrNull() ?: 0L
-        if (rupees < 0L) {
-            msg = "Amount daalo"
-            return
-        }
         busy = true
         scope.launch {
             val ok = withContext(Dispatchers.IO) { app.repo.setBalance(id, rupees * 100L) }
-            msg = if (ok) "Balance set: ${money(rupees * 100L)}" else "Save fail — net check karo"
+            msg = if (ok) "Balance set: ${money(rupees * 100L)}" else "Save fail"
             edit = withContext(Dispatchers.IO) { app.repo.refreshUser(id) }
             amt = ""
             note = ""
@@ -96,9 +89,7 @@ fun UsersScreen(onBack: () -> Unit) {
     fun toggleBan(id: String) {
         scope.launch {
             withContext(Dispatchers.IO) {
-                app.repo.refreshUser(id)?.let {
-                    app.repo.setStatus(id, if (it.active) "BANNED" else "ACTIVE")
-                }
+                app.repo.refreshUser(id)?.let { app.repo.setStatus(id, if (it.active) "BANNED" else "ACTIVE") }
             }
             edit = withContext(Dispatchers.IO) { app.repo.refreshUser(id) }
             reload()
@@ -146,10 +137,7 @@ fun UsersScreen(onBack: () -> Unit) {
 
     edit?.let { u ->
         AlertDialog(
-            onDismissRequest = {
-                edit = null
-                msg = ""
-            },
+            onDismissRequest = { edit = null; msg = "" },
             title = { Text(u.name, fontSize = 15.sp) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -157,15 +145,11 @@ fun UsersScreen(onBack: () -> Unit) {
                     Text("Balance: ${money(u.balance)}", color = Gold, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(100L, 500L, 1000L).forEach { v ->
-                            QuickChip("+$v") { amt = v.toString() }
-                        }
+                        listOf(100L, 500L, 1000L).forEach { v -> QuickChip("+$v") { amt = v.toString() } }
                     }
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        listOf(100L, 500L, 1000L).forEach { v ->
-                            QuickChip("-$v") { amt = v.toString() }
-                        }
+                        listOf(100L, 500L, 1000L).forEach { v -> QuickChip("-$v") { amt = v.toString() } }
                     }
                     Spacer(Modifier.height(10.dp))
                     Field(amt, "Amount ₹", { amt = it.filter(Char::isDigit) }, numeric = true)
@@ -177,27 +161,16 @@ fun UsersScreen(onBack: () -> Unit) {
                     }
                     Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(Modifier.weight(1f)) {
-                            GoldButton("+ ADD", !busy && amt.isNotBlank()) { move(u.id, 1) }
-                        }
-                        Box(Modifier.weight(1f)) {
-                            GhostButton("− CUT") { if (!busy) move(u.id, -1) }
-                        }
+                        Box(Modifier.weight(1f)) { GoldButton("+ ADD", !busy && amt.isNotBlank()) { move(u.id, 1) } }
+                        Box(Modifier.weight(1f)) { GhostButton("− CUT") { if (!busy) move(u.id, -1) } }
                     }
                     Spacer(Modifier.height(6.dp))
-                    GhostButton(if (amt.isBlank()) "SET EXACT" else "SET EXACT ₹$amt") {
-                        if (!busy) setExact(u.id)
-                    }
+                    GhostButton(if (amt.isBlank()) "SET EXACT" else "SET EXACT ₹$amt") { if (!busy) setExact(u.id) }
                     Spacer(Modifier.height(6.dp))
                     GhostButton(if (u.active) "BAN USER" else "UNBAN USER") { toggleBan(u.id) }
                 }
             },
-            confirmButton = {
-                TextButton({
-                    edit = null
-                    msg = ""
-                }) { Text("Close") }
-            }
+            confirmButton = { TextButton({ edit = null; msg = "" }) { Text("Close") } }
         )
     }
 }
